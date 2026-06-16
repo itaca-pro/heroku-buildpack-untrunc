@@ -1,0 +1,52 @@
+name: Build release asset
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-heroku-22:
+    name: Build untrunc for heroku-22
+    runs-on: ubuntu-22.04
+
+    env:
+      UNTRUNC_REF: a87f33aa36fb0e174eebad92434d2f9fc3a749da
+      ASSET_NAME: untrunc-heroku-22-amd64
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ca-certificates curl git make wget xz-utils yasm
+
+      - name: Clone untrunc
+        run: |
+          git clone https://github.com/anthwlock/untrunc.git /tmp/untrunc
+          git -C /tmp/untrunc checkout "$UNTRUNC_REF"
+
+      - name: Build untrunc
+        run: |
+          make -C /tmp/untrunc FF_VER=3.3.9 IS_RELEASE=1
+          mkdir -p dist
+          cp /tmp/untrunc/untrunc "dist/$ASSET_NAME"
+          chmod +x "dist/$ASSET_NAME"
+          ldd "dist/$ASSET_NAME"
+          "dist/$ASSET_NAME" || true
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ASSET_NAME }}
+          path: dist/${{ env.ASSET_NAME }}
+
+      - name: Publish GitHub release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ env.ASSET_NAME }}
+          make_latest: true

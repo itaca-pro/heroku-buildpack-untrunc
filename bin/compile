@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUILD_DIR="$1"
+INSTALL_DIR="$BUILD_DIR/vendor/untrunc/bin"
+UNTRUNC_URL="${UNTRUNC_URL:-https://github.com/itaca-pro/heroku-buildpack-untrunc/releases/download/v1/untrunc-heroku-22-amd64}"
+
+mkdir -p "$INSTALL_DIR"
+
+echo "-----> Installing untrunc"
+curl -fsSL "$UNTRUNC_URL" -o "$INSTALL_DIR/untrunc"
+chmod +x "$INSTALL_DIR/untrunc"
+
+mkdir -p "$BUILD_DIR/.profile.d"
+cat > "$BUILD_DIR/.profile.d/untrunc.sh" <<'EOF'
+export PATH="/app/vendor/untrunc/bin:$PATH"
+export UNTRUNC_BIN="${UNTRUNC_BIN:-/app/vendor/untrunc/bin/untrunc}"
+EOF
+
+echo "-----> Installed untrunc to /app/vendor/untrunc/bin/untrunc"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+cat <<'EOF'
+---
+config_vars:
+  UNTRUNC_BIN: /app/vendor/untrunc/bin/untrunc
+EOF
